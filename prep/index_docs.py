@@ -1,32 +1,35 @@
 """
 Offline preparation script.
 
-Run once (or whenever your Apple support docs change) to:
+Run once (or whenever your support documents change) to:
 1. Submit PDFs to PageIndex and get document tree structures
 2. Store the trees in MongoDB for use by the context_retrieval node
 
 Usage:
-    python -m prep.index_docs --pdf path/to/apple-support.pdf --doc-id apple-support
+    python -m prep.index_docs --pdf path/to/support-guide.pdf --doc-id apple-support
 
 Set PAGEINDEX_API_KEY and MONGODB_URI in your environment or .env file.
 """
-import asyncio
 import argparse
+import asyncio
 import os
 import time
-import requests
+
 import motor.motor_asyncio
-from pageindex import PageIndexClient
 import pageindex.utils as utils
+from dotenv import load_dotenv
+from pageindex import PageIndexClient
 
+load_dotenv()
 
-PAGEINDEX_API_KEY = os.environ["PAGEINDEX_API_KEY"]
+PAGEINDEX_API_KEY = os.environ.get("PAGEINDEX_API_KEY", "")
 MONGODB_URI = os.environ.get("MONGODB_URI", "mongodb://localhost:27017")
+MONGODB_DATABASE = os.environ.get("MONGODB_DATABASE", "support_bot")
 
 
 async def store_tree(doc_id: str, tree: list):
     client = motor.motor_asyncio.AsyncIOMotorClient(MONGODB_URI)
-    db = client.support_bot
+    db = client[MONGODB_DATABASE]
     await db.document_trees.replace_one(
         {"doc_id": doc_id},
         {"doc_id": doc_id, "tree": tree},
@@ -37,6 +40,8 @@ async def store_tree(doc_id: str, tree: list):
 
 
 def submit_and_wait(pdf_path: str) -> list:
+    if not PAGEINDEX_API_KEY:
+        raise ValueError("Set PAGEINDEX_API_KEY in .env before indexing documents.")
     pi_client = PageIndexClient(api_key=PAGEINDEX_API_KEY)
 
     result = pi_client.submit_document(pdf_path)

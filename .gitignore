@@ -7,6 +7,8 @@ __pycache__/
 env/
 venv/
 .venv/
+.pytest_cache/
+.ruff_cache/
 *.egg-info/
 dist/
 build/
@@ -24,16 +26,6 @@ build/
 # OS
 .DS_Store
 Thumbs.db
-
-# Terraform
-terraform/.terraform/
-terraform/*.tfstate
-terraform/*.tfstate.backup
-terraform/*.tfplan
-terraform/.terraform.lock.hcl
-
-# Eval reports (generated in CI)
-evals/reports/
 
 # Docker
 *.log
